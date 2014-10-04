@@ -14,12 +14,16 @@ public class MessagePayload {
   @JsonProperty("number")
   String mNumber;
 
-  @JsonProperty("contact")
-  Contact mContact;
+  @JsonProperty("contact_name")
+  String mContactName;
 
-  public MessagePayload(String message, String number, Contact contact) {
+  @JsonProperty("contact_number")
+  String mContactNumber;
+
+  public MessagePayload(String message, String number, String contactName, String contactNumber) {
     mMessage = message;
     mNumber = number;
-    mContact = contact;
+    mContactName = contactName;
+    mContactNumber = contactNumber;
   }
 }
