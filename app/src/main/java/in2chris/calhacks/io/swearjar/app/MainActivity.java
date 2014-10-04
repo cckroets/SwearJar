@@ -1,37 +1,33 @@
 package in2chris.calhacks.io.swearjar.app;
 
-import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import com.parse.Parse;
+import com.parse.ParseFacebookUtils;
 import in2chris.calhacks.io.swearjar.R;
+import in2chris.calhacks.io.swearjar.sms.SmsUtils;
+import roboguice.activity.RoboFragmentActivity;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends RoboFragmentActivity {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-    }
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    Parse.initialize(this, "kaXaeXxfwlzNOIdAUwPcFATkGnboNZHT82EkmGe2", "dIpBtvspJ8d6zSMtlLNjgzyI0UdCxegpec4ZNlr2");
+    ParseFacebookUtils.initialize("661005694006952");
+
+    setContentView(R.layout.activity_main);
+    //FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+    //transaction.add(R.id.fragment_container, new MainFragment());
+    SmsUtils.getInboxContents(getApplicationContext());
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    ParseFacebookUtils.finishAuthentication(requestCode, resultCode, data);
+  }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }
