@@ -25,10 +25,25 @@ dependencies {
   compile files('libs/Parse-1.7.0.jar')
   compile project(':facebook')
   compile files('libs/PayPalAndroidSDK-2.5.5.jar')
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
   compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
   compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
   compile 'com.squareup.retrofit:retrofit:1.6.1'
   compile 'com.squareup.retrofit:retrofit-converters:1.6.1'
   compile 'com.squareup.retrofit:converter-jackson:1.6.1'
+}
+
+
+android {
+  packagingOptions {
+    exclude 'META-INF/DEPENDENCIES.txt'
+    exclude 'META-INF/LICENSE.txt'
+    exclude 'META-INF/NOTICE.txt'
+    exclude 'META-INF/NOTICE'
+    exclude 'META-INF/LICENSE'
+    exclude 'META-INF/DEPENDENCIES'
+    exclude 'META-INF/notice.txt'
+    exclude 'META-INF/license.txt'
+    exclude 'META-INF/dependencies.txt'
+    exclude 'META-INF/LGPL2.1'
+  }
 }
