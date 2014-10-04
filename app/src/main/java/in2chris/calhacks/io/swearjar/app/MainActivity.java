@@ -1,9 +1,10 @@
-package in2chris.calhacks.io.swearjar;
+package in2chris.calhacks.io.swearjar.app;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import in2chris.calhacks.io.swearjar.R;
 
 
 public class MainActivity extends Activity {
