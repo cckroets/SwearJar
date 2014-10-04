@@ -1,5 +1,6 @@
 package in2chris.calhacks.io.swearjar.sms;
 
+import android.content.Context;
 import android.database.Cursor;
 
 
@@ -9,18 +10,18 @@ import android.database.Cursor;
 public final class Sms {
 
   private String mAddress;
+  private String mContactId;
   private String mBody;
-  private Integer mPerson;
-  private long mDate;
+  private String mName;
 
   Sms() { }
 
-  public static Sms fromCursor(Cursor query) {
+  public static Sms fromCursor(Context context, Cursor query) {
     final Sms sms = new Sms();
     sms.mAddress = query.getString(query.getColumnIndex(SmsReceiver.SMS_ADDRESS));
     sms.mBody = query.getString(query.getColumnIndex(SmsReceiver.SMS_BODY));
-    sms.mDate = Long.parseLong(query.getString(query.getColumnIndex(SmsReceiver.SMS_DATE)));
-    sms.mPerson = parsePerson(query.getString(query.getColumnIndex(SmsReceiver.SMS_PERSON)));
+    sms.mContactId = query.getString(query.getColumnIndex(SmsReceiver.SMS_PERSON));
+    sms.mName = SmsUtils.getNameFromNumber(context, sms.mAddress);
     return sms;
   }
 
@@ -33,18 +34,12 @@ public final class Sms {
     return mAddress;
   }
 
-  // Date received
-  public long getDate() {
-    return mDate;
-  }
-
-  // Cross-listing for an Android contact
-  public Integer getPerson() {
-    return mPerson;
-  }
-
   // Body of the message
   public String getBody() {
     return mBody;
+  }
+
+  public String getName() {
+    return mName;
   }
 }

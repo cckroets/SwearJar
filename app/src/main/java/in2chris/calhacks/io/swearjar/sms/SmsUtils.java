@@ -27,7 +27,7 @@ public class SmsUtils {
       ContactsContract.PhoneLookup._ID
   };
 
-  private static String getNameFromNumber(Context context, String number) {
+  public static String getNameFromNumber(Context context, String number) {
 
     Uri contactUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
     Cursor cursor = context.getContentResolver().query(contactUri, PROJECTION, null, null, null);
@@ -39,17 +39,13 @@ public class SmsUtils {
     return name;
   }
 
-  /**
-   * Read the entire contents of the user's inbox.
-   * @return Array of SMS messages, with a body, address, date, etc...
-   */
-  public static Sms[] getInboxContents(Context context) {
+  private static Sms[] getContents(Context context, String box) {
     // Create Draft box URI
     Log.d(TAG, "getInboxContents()");
-    final Uri draftURI = Uri.parse("content://sms/inbox");
+    final Uri draftURI = Uri.parse(box);
 
     // List required columns
-    final String[] reqCols = new String[]{SMS_ID, SMS_ADDRESS, SMS_PERSON, SMS_DATE, SMS_BODY};
+    final String[] reqCols = new String[]{SMS_ID, SMS_ADDRESS, SMS_BODY, SMS_PERSON};
 
     final ContentResolver cr = context.getContentResolver();
     final Cursor query = cr.query(draftURI, reqCols, null, null, null);
@@ -58,17 +54,48 @@ public class SmsUtils {
       final int messageCount = query.getCount();
       final Sms[] messageData = new Sms[messageCount];
       for (int i = 0; i < messageCount; i++) {
-        messageData[i] = Sms.fromCursor(query);
-        Log.d(TAG, "mAddress: " + messageData[i].getAddress());
-        Log.d(TAG, "body: " + messageData[i].getBody());
-        Log.d(TAG, "mDate: " + messageData[i].getDate());
-        Log.d(TAG, "mName: " + getNameFromNumber(context, messageData[i].getAddress()));
+        messageData[i] = Sms.fromCursor(context, query);
         query.moveToNext();
       }
       return messageData;
     } else {
-      Log.d(TAG, "inbox empty");
+      Log.d(TAG, box + " empty");
     }
     return null;
+  }
+
+  private static Sms getSingleSms(Context context, String box) {
+    // Create Draft box URI
+    Log.d(TAG, "get single from " + box);
+    final Uri draftURI = Uri.parse(box);
+
+    // List required columns
+    final String[] reqCols = new String[]{SMS_ID, SMS_ADDRESS, SMS_BODY, SMS_PERSON};
+
+    final ContentResolver cr = context.getContentResolver();
+    final Cursor query = cr.query(draftURI, reqCols, null, null, null);
+
+    if (query != null && query.moveToFirst()) {
+      Sms sms = Sms.fromCursor(context, query);
+      return sms;
+    } else {
+      return null;
+    }
+  }
+
+  public static Sms getLastSentMessage(Context context) {
+    return getSingleSms(context, "content://sms/sent");
+  }
+
+  public static Sms getLastReceivedMessage(Context context) {
+    return getSingleSms(context, "content://sms/inbox");
+  }
+
+  public static Sms[] getSentMessages(Context context) {
+    return getContents(context, "content://sms/sent");
+  }
+
+  public static Sms[] getInboxContents(Context context) {
+    return getContents(context, "content://sms/inbox");
   }
 }

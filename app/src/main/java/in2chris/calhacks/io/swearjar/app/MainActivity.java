@@ -5,6 +5,7 @@ import android.os.Bundle;
 import com.parse.Parse;
 import com.parse.ParseFacebookUtils;
 import in2chris.calhacks.io.swearjar.R;
+import in2chris.calhacks.io.swearjar.sms.SmsService;
 import in2chris.calhacks.io.swearjar.sms.SmsUtils;
 import roboguice.activity.RoboFragmentActivity;
 
@@ -20,7 +21,8 @@ public class MainActivity extends RoboFragmentActivity {
     setContentView(R.layout.activity_main);
     //FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     //transaction.add(R.id.fragment_container, new MainFragment());
-    SmsUtils.getInboxContents(getApplicationContext());
+    SmsUtils.getSentMessages(getApplicationContext());
+    startService(new Intent(this, SmsService.class));
   }
 
   @Override

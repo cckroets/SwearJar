@@ -26,4 +26,7 @@ dependencies {
   compile files('libs/Parse-1.7.0.jar')
   compile project(':facebook')
   compile files('libs/PayPalAndroidSDK-2.5.5.jar')
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.4.3'
+  compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.3'
 }
