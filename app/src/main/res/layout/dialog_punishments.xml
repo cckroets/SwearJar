@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:clickable="true"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+  <TextView
+      android:text="Choose your punishment"
+      android:textStyle="bold"
+      android:textColor="@android:color/white"
+      android:textSize="8pt"
+      android:padding="10dp"
+      android:gravity="center_vertical"
+      android:layout_width="match_parent"
+      android:background="@android:color/holo_orange_dark"
+      android:layout_height="wrap_content"/>
+
+ <Button
+     android:gravity="left|center_vertical"
+     android:clickable="true"
+     android:id="@+id/shaming"
+     android:text="Public Shaming"
+     android:textStyle="bold"
+     android:textColor="@android:color/holo_orange_dark"
+     android:textSize="8pt"
+     android:drawableLeft="@drawable/ic_fb"
+     android:background="@drawable/dialog_button"
+     android:drawablePadding="15dp"
+     android:padding="10dp"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"/>
+
+<View
+    android:layout_width="match_parent"
+    android:layout_height="0.5dp"
+    android:background="@android:color/darker_gray" />
+
+  <Button
+      android:id="@+id/donate"
+      android:clickable="true"
+      android:gravity="left|center_vertical"
+      android:text="Donate to Charity"
+      android:padding="10dp"
+      android:background="@drawable/dialog_button"
+      android:drawablePadding="15dp"
+      android:textStyle="bold"
+      android:textColor="@android:color/holo_orange_dark"
+      android:textSize="8pt"
+      android:drawableLeft="@drawable/ic_paypal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
+
+</LinearLayout>
