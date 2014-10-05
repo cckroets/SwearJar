@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -157,6 +158,7 @@ public class MainFragment extends RoboFragment {
     if (score >= MAX_JAR_DOLLARS) {
       resId = R.drawable.jar_100_full;
       mJarFullText.setVisibility(View.VISIBLE);
+      mJarFullText.setAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.trans_loop));
       mJarImage.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -180,6 +182,7 @@ public class MainFragment extends RoboFragment {
 
     if (score < MAX_JAR_DOLLARS) {
       mJarImage.setOnClickListener(null);
+      mJarFullText.clearAnimation();
       mJarFullText.setVisibility(View.INVISIBLE);
     }
   }

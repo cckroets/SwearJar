@@ -51,7 +51,6 @@ public class MainActivity extends RoboFragmentActivity implements PunishmentDial
 
     startServices();
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-    transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
     transaction.replace(R.id.fragment_container, LaunchFragment.newInstance());
     transaction.commit();
   }
@@ -75,10 +74,8 @@ public class MainActivity extends RoboFragmentActivity implements PunishmentDial
     Session session = Session.getActiveSession();
 
     if (session != null) {
-      FacebookDialog shareDialog = new FacebookDialog.ShareDialogBuilder(this).setLink("https://challengepost.com")
-                                                                              .setCaption(
-                                                                                  "Swear Jar caught me swearing to my friends!\n\n Find out more at:")
-                                                                              .build();
+      FacebookDialog shareDialog =
+          new FacebookDialog.ShareDialogBuilder(this).setLink("http://www.swearless.me/").build();
       shareDialog.present();
     }
   }
@@ -129,13 +126,12 @@ public class MainActivity extends RoboFragmentActivity implements PunishmentDial
       Log.d("MainActivity", "resultCode = " + requestCode);
     }
     final String number = mPreferenceManager.getString(LaunchFragment.KEY_NUMBER, null);
-    if (number != null) {
+    if (number != null && (requestCode == PAYPAL_REQUEST || resultCode == Activity.RESULT_OK)) {
       mSwearJarAPI.empty(number, new Callback<Response>() {
         @Override
         public void success(Response response, retrofit.client.Response response2) {
           Log.d("MainActivity", "empty success");
-          mBus.post(new PunishmentTakenEvent(requestCode == PAYPAL_REQUEST ?
-                                                 PunishmentTakenEvent.Type.DONATION
+          mBus.post(new PunishmentTakenEvent(requestCode == PAYPAL_REQUEST ? PunishmentTakenEvent.Type.DONATION
                                                  : PunishmentTakenEvent.Type.FB_SHAMING));
         }
 
