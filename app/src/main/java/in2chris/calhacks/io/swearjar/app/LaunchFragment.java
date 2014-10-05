@@ -1,9 +1,9 @@
 package in2chris.calhacks.io.swearjar.app;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -11,14 +11,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.Toast;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphUser;
+import com.facebook.widget.FacebookDialog;
 import com.facebook.widget.LoginButton;
-import com.paypal.android.sdk.payments.PayPalPayment;
-import com.paypal.android.sdk.payments.PaymentActivity;
-import com.paypal.android.sdk.payments.PaymentConfirmation;
+import com.google.inject.Inject;
 import in2chris.calhacks.io.swearjar.R;
-import java.math.BigDecimal;
-import org.json.JSONException;
+import in2chris.calhacks.io.swearjar.network.SwearJarAPI;
+import retrofit.Callback;
+import retrofit.RetrofitError;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
@@ -28,20 +34,23 @@ import roboguice.inject.InjectView;
  */
 public class LaunchFragment extends RoboFragment {
 
+  public static final String KEY_NAME = "name";
+  public static final String KEY_FB_ID = "fb_id";
+  public static final String KEY_NUMBER = "number";
+
   @InjectView(R.id.login_button)
   LoginButton mLoginButton;
 
   @InjectView(R.id.phone_number)
   EditText mPhoneNumber;
 
-  @InjectView(R.id.name)
-  EditText mName;
+  @Inject
+  PreferenceManager mPreferenceManager;
 
-  @InjectView(R.id.login_view)
-  LinearLayout mLoginView;
+  @Inject
+  SwearJarAPI mSwearJarAPI;
 
-  private static final int PAYPAL_REQUEST = 5;
-  private static final String TAG = LaunchFragment.class.getName();
+  UiLifecycleHelper mUiHelper;
 
   TextWatcher mTextWatcher = new TextWatcher() {
     @Override
@@ -66,6 +75,19 @@ public class LaunchFragment extends RoboFragment {
     }
   };
 
+
+  private FacebookDialog.Callback mDialogCallback = new FacebookDialog.Callback() {
+    @Override
+    public void onComplete(FacebookDialog.PendingCall pendingCall, Bundle data) {
+      Log.d("HelloFacebook", "Success!");
+    }
+
+    @Override
+    public void onError(FacebookDialog.PendingCall pendingCall, Exception error, Bundle data) {
+      Log.d("HelloFacebook", String.format("Error: %s", error.toString()));
+    }
+  };
+
   public static LaunchFragment newInstance() {
     return new LaunchFragment();
   }
@@ -73,6 +95,13 @@ public class LaunchFragment extends RoboFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    mUiHelper = new UiLifecycleHelper(getActivity(), new Session.StatusCallback() {
+      @Override
+      public void call(Session session, SessionState state, Exception exception) {
+        onSessionStateChange(session, state, exception);
+      }
+    });
+    mUiHelper.onCreate(savedInstanceState);
   }
 
   @Override
@@ -81,59 +110,114 @@ public class LaunchFragment extends RoboFragment {
     return inflater.inflate(R.layout.fragment_launch, container, false);
   }
 
+  private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+    if (state.isOpened()) {
+      Log.i("HelloFacebook", "Logged in...");
+      // make request to get facebook user info
+      final String fbId = mPreferenceManager.getString(KEY_FB_ID, null);
+      final String fbName = mPreferenceManager.getString(KEY_NAME, null);
+      String number = mPreferenceManager.getString(KEY_NUMBER, null);
+      if (number == null) {
+        number = mPhoneNumber.getText().toString();
+        mPreferenceManager.putString(KEY_NUMBER, number);
+      }
+      final String argNumber = number;
+      if (fbId == null || fbName == null) {
+        Request.newMeRequest(session, new Request.GraphUserCallback() {
+          @Override
+          public void onCompleted(GraphUser user, Response response) {
+            onMeLoaded(user, argNumber);
+          }
+        }).executeAsync();
+      } else {
+        goToMainFragment(fbId, fbName, number);
+      }
+    } else if (state.isClosed()) {
+      Log.i("HelloFacebook", "Logged out...");
+    }
+  }
+
+  private void onMeLoaded(GraphUser me, String number) {
+    Log.i("fb", "fb user: " + me.toString());
+    final String fbId = me.getId();
+    final String fbName = me.getName();
+
+    mSwearJarAPI.register(number, fbName, fbId, new Callback<in2chris.calhacks.io.swearjar.network.Response>() {
+      @Override
+      public void success(in2chris.calhacks.io.swearjar.network.Response response, retrofit.client.Response response2) {
+        Log.d("HelloFacebook", "Success!");
+        mPreferenceManager.putString(KEY_NAME, fbName);
+        mPreferenceManager.putString(KEY_FB_ID, fbId);
+        mPreferenceManager.putString(KEY_NUMBER, mPhoneNumber.getText().toString());
+        goToMainFragment(fbId, fbName, mPhoneNumber.getText().toString());
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.d("HelloFacebook", "Failure! " + error.getMessage());
+        Toast.makeText(getActivity(), "Could not log in", Toast.LENGTH_SHORT).show();
+      }
+    });
+  }
+
+  private void goToMainFragment(String fbId, String fbName, String number) {
+    FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+    transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+    transaction.replace(R.id.fragment_container, MainFragment.newInstance(fbId, fbName, number));
+    transaction.commit();
+  }
+
+
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    mLoginButton.setFragment(this);
+    mLoginButton.setReadPermissions("public_profile");
     mPhoneNumber.addTextChangedListener(mTextWatcher);
-    mName.addTextChangedListener(mTextWatcher);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    mUiHelper.onResume();
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    mUiHelper.onSaveInstanceState(outState);
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    mUiHelper.onPause();
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+    mUiHelper.onStop();
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    mUiHelper.onDestroy();
   }
 
   private boolean validCreds() {
-    final String name = mName.getText().toString();
     final String number = mPhoneNumber.getText().toString();
 
-    return name.length() > 0
-        && number.matches("[0-9]+")
+    return number.matches("[0-9]+")
         && number.length() == 10;
-  }
-
-  public void onBuyPressed(View pressed) {
-
-    // PAYMENT_INTENT_SALE will cause the payment to complete immediately.
-    // Change PAYMENT_INTENT_SALE to
-    //   - PAYMENT_INTENT_AUTHORIZE to only authorize payment and capture funds later.
-    //   - PAYMENT_INTENT_ORDER to create a payment for authorization and capture
-    //     later via calls from your server.
-
-    PayPalPayment payment = new PayPalPayment(new BigDecimal("1.00"), "USD", "F*ck", PayPalPayment.PAYMENT_INTENT_SALE);
-    Intent intent = new Intent(getActivity(), PaymentActivity.class);
-    intent.putExtra(PaymentActivity.EXTRA_PAYMENT, payment);
-    startActivityForResult(intent, PAYPAL_REQUEST);
   }
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    Log.d(TAG, "onActivityResult() : " + requestCode);
-    if (requestCode == PAYPAL_REQUEST && resultCode == Activity.RESULT_OK) {
-      PaymentConfirmation confirm = data.getParcelableExtra(PaymentActivity.EXTRA_RESULT_CONFIRMATION);
-      if (confirm != null) {
-        try {
-          Log.i("paymentExample", confirm.toJSONObject().toString(4));
-
-          // TODO: send 'confirm' to your server for verification.
-          // see https://developer.paypal.com/webapps/developer/docs/integration/mobile/verify-mobile-payment/
-          // for more details.
-
-        } catch (JSONException e) {
-          Log.e("paymentExample", "an extremely unlikely failure occurred: ", e);
-        }
-      }
-    } else if (resultCode == Activity.RESULT_CANCELED) {
-      Log.i("paymentExample", "The user canceled.");
-    } else if (resultCode == PaymentActivity.RESULT_EXTRAS_INVALID) {
-      Log.i("paymentExample", "An invalid Payment or PayPalConfiguration was submitted. Please see the docs.");
-    } else {
-      Log.d(TAG, "resultCode = " + requestCode);
-    }
+    super.onActivityResult(requestCode, resultCode, data);
+    mUiHelper.onActivityResult(requestCode, resultCode, data, mDialogCallback);
   }
+
+
 }

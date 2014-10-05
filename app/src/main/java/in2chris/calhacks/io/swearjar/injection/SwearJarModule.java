@@ -11,7 +11,7 @@ import retrofit.converter.JacksonConverter;
  */
 public class SwearJarModule extends AbstractModule {
 
-  private static final String END_POINT = "????";
+  private static final String END_POINT = "http://whispering-river-1524.herokuapp.com";
 
   @Override
   protected void configure() {

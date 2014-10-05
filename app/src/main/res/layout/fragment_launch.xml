@@ -3,45 +3,45 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:orientation="vertical"
              android:layout_width="match_parent"
-             android:background="@android:color/holo_orange_dark"
+             android:background="@drawable/background"
              android:layout_height="match_parent">
 
   <LinearLayout
       android:id="@+id/login_view"
       android:orientation="vertical"
-      android:layout_gravity="center"
+      android:layout_gravity="center_horizontal"
       android:gravity="center"
       android:padding="20dp"
-      android:layout_marginBottom="100dp"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content">
 
     <TextView
-        android:text="Sign up"
+        android:text="Swear Jar"
+        android:drawableBottom="@drawable/gold_coins"
+        android:drawablePadding="15dp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
-        android:textSize="15pt"
+        android:textSize="25pt"
+        android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-    <EditText
-        android:id="@+id/name"
-        android:hint="Enter Name"
-        android:gravity="center_horizontal"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="10pt"
-        android:textColorHint="#b4f6f6f6"
+
+    <TextView
+        android:text="Sign up"
         android:textColor="@android:color/white"
-        android:layout_marginBottom="20dp"/>
+        android:textSize="13pt"
+        android:layout_marginBottom="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <EditText
         android:id="@+id/phone_number"
         android:hint="Enter Phone Number"
         android:gravity="center_horizontal"
         android:layout_width="240dp"
+        android:inputType="phone"
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textSize="10pt"
@@ -50,6 +50,7 @@
         android:layout_marginBottom="20dp"/>
 
     <com.facebook.widget.LoginButton
+        xmlns:fb="http://schemas.android.com/apk/res-auto"
         android:id="@+id/login_button"
         android:enabled="false"
         android:alpha="0.7"

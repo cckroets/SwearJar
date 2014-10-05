@@ -11,20 +11,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ScoreResponse {
 
   @JsonProperty("score")
-  int mScore;
+  double mScore;
 
   @JsonProperty("sum")
-  int mSum;
+  double mSum;
 
   private ScoreResponse() {
 
   }
 
-  public int getScore() {
+  public double getScore() {
     return mScore;
   }
 
-  public int getSum() {
+  public double getSum() {
     return mSum;
   }
 }

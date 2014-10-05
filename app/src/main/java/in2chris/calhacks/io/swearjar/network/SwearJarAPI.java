@@ -5,7 +5,6 @@ import retrofit.http.Field;
 import retrofit.http.FormUrlEncoded;
 import retrofit.http.GET;
 import retrofit.http.POST;
-import retrofit.http.PUT;
 import retrofit.http.Path;
 
 
@@ -19,7 +18,6 @@ public interface SwearJarAPI {
   void messageSent(
       @Field("message") String message,
       @Field("number") String number,
-      @Field("contact_name") String contactName,
       @Field("contact_number") String contactNumber,
       Callback<ScoreResponse> callback
   );
@@ -29,7 +27,6 @@ public interface SwearJarAPI {
   void messageReceived(
       @Field("message") String message,
       @Field("number") String number,
-      @Field("contact_name") String contactName,
       @Field("contact_number") String contactNumber,
       Callback<Response> callback
   );
@@ -41,9 +38,9 @@ public interface SwearJarAPI {
   );
 
   @FormUrlEncoded
-  @PUT("/register")
+  @POST("/register/{number}")
   void register(
-      @Field("number") String number,
+      @Path("number") String number,
       @Field("name") String name,
       @Field("facebook_id") String fbId,
       Callback<Response> callback

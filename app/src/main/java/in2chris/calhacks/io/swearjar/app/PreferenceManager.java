@@ -28,4 +28,7 @@ public class PreferenceManager {
     mSharedPreferences.edit().putString(key, value).apply();
   }
 
+  public void clearAll() {
+    mSharedPreferences.edit().clear().commit();
+  }
 }
