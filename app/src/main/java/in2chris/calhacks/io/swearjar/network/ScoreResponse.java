@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Created by ckroetsc on 10/4/14.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ScoreResponse {
+public final class ScoreResponse {
 
   @JsonProperty("score")
   double mScore;

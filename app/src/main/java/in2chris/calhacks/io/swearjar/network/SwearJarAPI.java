@@ -46,4 +46,10 @@ public interface SwearJarAPI {
       Callback<Response> callback
   );
 
+  @POST("/jar/empty/{number}")
+  void empty(
+      @Path("number") String number,
+      Callback<Response> callback
+  );
+
 }

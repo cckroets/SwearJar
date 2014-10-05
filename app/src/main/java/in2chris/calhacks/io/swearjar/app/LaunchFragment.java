@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.Request;
 import com.facebook.Response;
@@ -44,6 +45,9 @@ public class LaunchFragment extends RoboFragment {
   @InjectView(R.id.phone_number)
   EditText mPhoneNumber;
 
+  @InjectView(R.id.title)
+  TextView mTitle;
+
   @Inject
   PreferenceManager mPreferenceManager;
 
@@ -51,6 +55,8 @@ public class LaunchFragment extends RoboFragment {
   SwearJarAPI mSwearJarAPI;
 
   UiLifecycleHelper mUiHelper;
+
+  boolean mRegistered;
 
   TextWatcher mTextWatcher = new TextWatcher() {
     @Override
@@ -95,6 +101,8 @@ public class LaunchFragment extends RoboFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    final String number = mPreferenceManager.getString(KEY_NUMBER, null);
+    mRegistered = (number != null);
     mUiHelper = new UiLifecycleHelper(getActivity(), new Session.StatusCallback() {
       @Override
       public void call(Session session, SessionState state, Exception exception) {
@@ -108,6 +116,26 @@ public class LaunchFragment extends RoboFragment {
   public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
       @Nullable Bundle savedInstanceState) {
     return inflater.inflate(R.layout.fragment_launch, container, false);
+  }
+
+  @Override
+  public void onViewCreated(View view, Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    mLoginButton.setFragment(this);
+    mLoginButton.setReadPermissions("public_profile");
+    mPhoneNumber.addTextChangedListener(mTextWatcher);
+    if (mRegistered) {
+      if (Session.getActiveSession() == null || !Session.getActiveSession().isOpened()) {
+        mTitle.setText("Log in");
+        mPhoneNumber.setVisibility(View.GONE);
+      } else {
+        onSessionStateChange(Session.getActiveSession(), Session.getActiveSession().getState(), null);
+      }
+    } else {
+      mTitle.setText("Sign up");
+      mPhoneNumber.setVisibility(View.VISIBLE);
+    }
+
   }
 
   private void onSessionStateChange(Session session, SessionState state, Exception exception) {
@@ -169,14 +197,6 @@ public class LaunchFragment extends RoboFragment {
 
 
   @Override
-  public void onViewCreated(View view, Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
-    mLoginButton.setFragment(this);
-    mLoginButton.setReadPermissions("public_profile");
-    mPhoneNumber.addTextChangedListener(mTextWatcher);
-  }
-
-  @Override
   public void onResume() {
     super.onResume();
     mUiHelper.onResume();
@@ -191,7 +211,7 @@ public class LaunchFragment extends RoboFragment {
   @Override
   public void onPause() {
     super.onPause();
-    mUiHelper.onPause();
+    //mUiHelper.onPause();
   }
 
   @Override

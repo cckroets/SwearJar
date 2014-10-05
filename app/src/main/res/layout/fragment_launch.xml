@@ -29,6 +29,7 @@
 
 
     <TextView
+        android:id="@+id/title"
         android:text="Sign up"
         android:textColor="@android:color/white"
         android:textSize="13pt"

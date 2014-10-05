@@ -1,6 +1,5 @@
 package in2chris.calhacks.io.swearjar.app;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,17 +8,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.facebook.widget.ProfilePictureView;
 import com.google.inject.Inject;
-import com.paypal.android.sdk.payments.PayPalPayment;
-import com.paypal.android.sdk.payments.PaymentActivity;
-import com.paypal.android.sdk.payments.PaymentConfirmation;
+import com.squareup.otto.Subscribe;
 import in2chris.calhacks.io.swearjar.R;
+import in2chris.calhacks.io.swearjar.event.BusSingleton;
+import in2chris.calhacks.io.swearjar.event.PunishmentTakenEvent;
 import in2chris.calhacks.io.swearjar.network.ScoreResponse;
 import in2chris.calhacks.io.swearjar.network.SwearJarAPI;
-import java.math.BigDecimal;
 import java.text.NumberFormat;
-import org.json.JSONException;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -33,9 +31,11 @@ import roboguice.inject.InjectView;
 public class MainFragment extends RoboFragment {
 
   public static final double MAX_JAR_DOLLARS = 10; // $10.00
+  final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance();
 
-  private static final int PAYPAL_REQUEST = 5;
-  private static final String TAG = LaunchFragment.class.getName();
+  private static final String TAG = MainFragment.class.getName();
+
+  public static double money;
 
   @InjectView(R.id.welcome)
   TextView mWelcomeText;
@@ -79,6 +79,7 @@ public class MainFragment extends RoboFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     final Bundle args = getArguments();
+    BusSingleton.get().register(this);
     mNumber = args.getString(LaunchFragment.KEY_NUMBER);
     mId = args.getString(LaunchFragment.KEY_FB_ID);
     mName = args.getString(LaunchFragment.KEY_NAME);
@@ -92,9 +93,6 @@ public class MainFragment extends RoboFragment {
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    final NumberFormat format = NumberFormat.getCurrencyInstance();
-
-
     if (mId != null) {
       mProfilePictureView.setProfileId(mId);
     }
@@ -105,16 +103,12 @@ public class MainFragment extends RoboFragment {
       mWelcomeText.setText("Welcome!");
     }
 
-    mJarMax.setText(format.format(MAX_JAR_DOLLARS));
+    mJarMax.setText(CURRENCY_FORMAT.format(MAX_JAR_DOLLARS));
     if (mNumber != null) {
       mSwearJarAPI.getScore(mNumber, new Callback<ScoreResponse>() {
         @Override
         public void success(ScoreResponse scoreResponse, Response response) {
-          final String dollars = format.format(scoreResponse.getSum());
-          mJarSum.setText(dollars);
-          if (scoreResponse.getSum() >= MAX_JAR_DOLLARS) {
-            mJarFullText.setVisibility(View.VISIBLE);
-          }
+          bindJar(scoreResponse.getScore());
         }
 
         @Override
@@ -124,52 +118,76 @@ public class MainFragment extends RoboFragment {
         }
       });
     }
-    mJarImage.setOnClickListener(new View.OnClickListener() {
+  }
+
+  @Override
+  public void onDestroy() {
+    BusSingleton.get().unregister(this);
+    super.onDestroy();
+  }
+
+  @Subscribe
+  public void onPunishmentTaken(PunishmentTakenEvent event) {
+    bindJar(0);
+    Toast.makeText(getActivity(), "Jar emptied!", Toast.LENGTH_SHORT).show();
+  }
+
+  @Override
+  public void onStart() {
+    super.onStart();
+    Log.d(TAG, "number = " + mNumber);
+    mSwearJarAPI.getScore(mNumber, new Callback<ScoreResponse>() {
       @Override
-      public void onClick(View v) {
-        android.support.v4.app.DialogFragment dialogFragment = new PunishmentDialogFragment();
-        dialogFragment.show(getActivity().getSupportFragmentManager(), "punishments");
+      public void success(ScoreResponse scoreResponse, Response response) {
+        Log.d(TAG, "sum = " + scoreResponse.getScore());
+        bindJar(scoreResponse.getScore());
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.e(TAG, error.getMessage());
       }
     });
   }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    Log.d(TAG, "onActivityResult() : " + requestCode);
-    if (requestCode == PAYPAL_REQUEST && resultCode == Activity.RESULT_OK) {
-      PaymentConfirmation confirm = data.getParcelableExtra(PaymentActivity.EXTRA_RESULT_CONFIRMATION);
-      if (confirm != null) {
-        try {
-          Log.i("paymentExample", confirm.toJSONObject().toString(4));
-
-          // TODO: send 'confirm' to your server for verification.
-          // see https://developer.paypal.com/webapps/developer/docs/integration/mobile/verify-mobile-payment/
-          // for more details.
-
-        } catch (JSONException e) {
-          Log.e("paymentExample", "an extremely unlikely failure occurred: ", e);
+  void bindJar(double score) {
+    int resId;
+    final String dollars = CURRENCY_FORMAT.format(score);
+    money = score;
+    if (score >= MAX_JAR_DOLLARS) {
+      resId = R.drawable.jar_100_full;
+      mJarFullText.setVisibility(View.VISIBLE);
+      mJarImage.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          android.support.v4.app.DialogFragment dialogFragment = new PunishmentDialogFragment();
+          dialogFragment.show(getActivity().getSupportFragmentManager(), "punishments");
         }
-      }
-    } else if (resultCode == Activity.RESULT_CANCELED) {
-      Log.i("paymentExample", "The user canceled.");
-    } else if (resultCode == PaymentActivity.RESULT_EXTRAS_INVALID) {
-      Log.i("paymentExample", "An invalid Payment or PayPalConfiguration was submitted. Please see the docs.");
+      });
+    } else if (score >= 0.8 * MAX_JAR_DOLLARS) {
+      resId = R.drawable.jar_80_full;
+    } else if (score >= 0.6 * MAX_JAR_DOLLARS) {
+      resId = R.drawable.jar_60_full;
+    } else if (score >= 0.4 * MAX_JAR_DOLLARS) {
+      resId = R.drawable.jar_40_full;
+    } else if (score > 0) {
+      resId = R.drawable.jar_20_full;
     } else {
-      Log.d(TAG, "resultCode = " + requestCode);
+      resId = R.drawable.jar_0_full;
+    }
+    mJarImage.setImageResource(resId);
+    mJarSum.setText(dollars);
+
+    if (score < MAX_JAR_DOLLARS) {
+      mJarImage.setOnClickListener(null);
+      mJarFullText.setVisibility(View.INVISIBLE);
     }
   }
 
-  public void onBuyPressed(View pressed) {
-
-    // PAYMENT_INTENT_SALE will cause the payment to complete immediately.
-    // Change PAYMENT_INTENT_SALE to
-    //   - PAYMENT_INTENT_AUTHORIZE to only authorize payment and capture funds later.
-    //   - PAYMENT_INTENT_ORDER to create a payment for authorization and capture
-    //     later via calls from your server.
-
-    PayPalPayment payment = new PayPalPayment(new BigDecimal("1.00"), "USD", "F*ck", PayPalPayment.PAYMENT_INTENT_SALE);
-    Intent intent = new Intent(getActivity(), PaymentActivity.class);
-    intent.putExtra(PaymentActivity.EXTRA_PAYMENT, payment);
-    startActivityForResult(intent, PAYPAL_REQUEST);
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
   }
+
+
 }
